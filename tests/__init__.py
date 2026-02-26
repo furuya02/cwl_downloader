@@ -1,3 +1,0 @@
-"""
-cwl_downloader tests
-"""
