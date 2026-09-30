@@ -74,6 +74,7 @@ def confirm_settings(
     print(f"log_group: {log_group}")
     print(f"start: {start_time.strftime('%Y-%m-%d %H:%M')}")
     print(f"end: {end_time.strftime('%Y-%m-%d %H:%M')}")
+    print("unmask: ON")
     print()
 
     while True:

@@ -11,6 +11,7 @@ AWS CloudWatch Logsを日付指定でダウンロードするコマンドライ�
 - 対話型のCLIインターフェース（確認プロンプト付き）
 - ダウンロード中の進捗表示
 - ダウンロードしたログを自動的に1つのファイルに結合
+- CloudWatch Logs データ保護でマスクされた項目をマスク解除して取得（`logs:Unmask` 権限が必要。権限が無い場合は警告を表示してマスク付きで取得）
 
 ## 要件
 
@@ -80,6 +81,7 @@ region: ap-northeast-1
 log_group: /aws/lambda/my-function
 start: 2026-01-01 10:00
 end: 2026-01-01 12:00
+unmask: ON
 
 (y/n)> y
 
@@ -221,13 +223,16 @@ $ cwl_downloader
       "Effect": "Allow",
       "Action": [
         "logs:DescribeLogGroups",
-        "logs:FilterLogEvents"
+        "logs:FilterLogEvents",
+        "logs:Unmask"
       ],
       "Resource": "*"
     }
   ]
 }
 ```
+
+`logs:Unmask` は CloudWatch Logs データ保護のマスク解除に必要です。権限が無い場合は警告を表示し、マスク付きのログを取得します。
 
 ## プロジェクト構造
 
