@@ -63,6 +63,7 @@ ERROR_MESSAGES = {
     "start_after_end": "開始日時は終了日時より前である必要があります。",
     "api_error": "AWS API呼び出しでエラーが発生しました: {error}",
     "io_error": "ファイル操作でエラーが発生しました: {error}",
+    "unmask_denied": "⚠️ logs:Unmask 権限が無いため、マスク付きで取得します。",
 }
 
 

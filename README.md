@@ -11,6 +11,7 @@ A command-line tool to download AWS CloudWatch Logs for a specified time period.
 - Interactive CLI interface with confirmation prompts
 - Progress display during download
 - Automatic merging of downloaded logs into a single file
+- Unmasks data masked by CloudWatch Logs data protection policies (requires `logs:Unmask`; falls back to masked logs with a warning if the permission is missing)
 
 ## Requirements
 
@@ -80,6 +81,7 @@ region: ap-northeast-1
 log_group: /aws/lambda/my-function
 start: 2026-01-01 10:00
 end: 2026-01-01 12:00
+unmask: ON
 
 (y/n)> y
 
@@ -221,13 +223,16 @@ File size: 3,752,376 bytes
       "Effect": "Allow",
       "Action": [
         "logs:DescribeLogGroups",
-        "logs:FilterLogEvents"
+        "logs:FilterLogEvents",
+        "logs:Unmask"
       ],
       "Resource": "*"
     }
   ]
 }
 ```
+
+`logs:Unmask` is required to unmask data protected by CloudWatch Logs data protection. Without it, the tool shows a warning and downloads masked logs.
 
 ## Project Structure
 

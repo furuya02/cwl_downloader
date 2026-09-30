@@ -31,6 +31,9 @@ class CloudWatchLogsDownloader:
         try:
             self.client = boto3.client("logs", region_name=region)
             self.region = region
+            # Unmask data protected by CloudWatch Logs data protection policies
+            # (requires logs:Unmask; falls back to masked logs if denied)
+            self.unmask = True
             # Test credentials by making a simple API call
             self.client.describe_log_groups(limit=1)
         except NoCredentialsError:
@@ -102,24 +105,24 @@ class CloudWatchLogsDownloader:
         max_retries = 3
         retry_delay = 1  # seconds
 
-        for attempt in range(max_retries):
+        attempt = 0
+        while attempt < max_retries:
+            logs = []
             try:
                 next_token = None
 
                 while True:
+                    params = {
+                        "logGroupName": log_group_name,
+                        "startTime": start_ms,
+                        "endTime": end_ms,
+                    }
+                    if self.unmask:
+                        params["unmask"] = True
                     if next_token:
-                        response = self.client.filter_log_events(
-                            logGroupName=log_group_name,
-                            startTime=start_ms,
-                            endTime=end_ms,
-                            nextToken=next_token,
-                        )
-                    else:
-                        response = self.client.filter_log_events(
-                            logGroupName=log_group_name,
-                            startTime=start_ms,
-                            endTime=end_ms,
-                        )
+                        params["nextToken"] = next_token
+
+                    response = self.client.filter_log_events(**params)
 
                     # Process events
                     for event in response.get("events", []):
@@ -139,9 +142,17 @@ class CloudWatchLogsDownloader:
                 break
 
             except ClientError as e:
-                if attempt < max_retries - 1:
+                error_code = e.response.get("Error", {}).get("Code", "")
+                if self.unmask and error_code == "AccessDeniedException":
+                    # No logs:Unmask permission - retry without unmask
+                    print(get_error_message("unmask_denied"))
+                    self.unmask = False
+                    continue
+
+                attempt += 1
+                if attempt < max_retries:
                     # Exponential backoff
-                    time.sleep(retry_delay * (2**attempt))
+                    time.sleep(retry_delay * (2 ** (attempt - 1)))
                     continue
                 else:
                     # Final attempt failed
